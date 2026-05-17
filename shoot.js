@@ -41,7 +41,7 @@ player();
 pShotMove();
 EnemySpawn(time);
 EnemyMove();
-collision();
+collision(pShots,Enemies,'pShotSize','EnemySize','pShotX','EnemyX','pShotY','EnemyY');
 frameCounter++
 
 window.requestAnimationFrame(gameLoop);
@@ -72,7 +72,7 @@ if(keys.s){playerY += playerSpeed;};
 if(keys.d){playerX += playerSpeed;};
 if(keys.a){playerX -= playerSpeed;};
 if(keys.click){
-    pShots.push(new playerShot(playerX+playerSize/2,playerY+playerSize/2));
+    pShots.push(new playerShot(playerX+playerSize/2,playerY+playerSize/2,pShotSize));
     keys.click = false ;
     drawImg(10 , -playerSize / 2, -playerSize / 2, playerSize);}else{
     drawImg((Math.floor(frameCounter / 10) % 3) + 7, -playerSize / 2, -playerSize / 2, playerSize);
@@ -80,9 +80,10 @@ if(keys.click){
     ctx.restore();
 }
 class playerShot {
-    constructor(pShotX,pShotY){
+    constructor(pShotX,pShotY,pShotSize){
         this.pShotX = pShotX ;
         this.pShotY = pShotY ;
+        this.pShotSize = pShotSize
          this.ShotDx = mouseX - this.pShotX;
          this.ShotDy = mouseY - this.pShotY; 
          this.ShotAngle = Math.atan2(this.ShotDy,this.ShotDx);
@@ -102,9 +103,9 @@ class playerShot {
     }
     draw(){
         ctx.save();
-        ctx.translate(this.pShotX + pShotSize / 2, this.pShotY + pShotSize / 2);
+        ctx.translate(this.pShotX + this.pShotSize / 2, this.pShotY + this.pShotSize / 2);
         ctx.rotate(this.ShotAngle)
-        drawImg(4, -pShotSize / 2, -pShotSize / 2, pShotSize);
+        drawImg(4, -this.pShotSize / 2, -this.pShotSize / 2, this.pShotSize);
         ctx.restore();
     }
 }
@@ -115,16 +116,16 @@ function pShotMove(){
     }
     pShots = pShots.filter(pShot => pShot.active);
 }
-function collision(){
-    for (let i = pShots.length -1; i>=0; i--){
-        let p = pShots[i];
-        for (let j = Enemies.length -1; j>=0; j--){
-        let e = Enemies[j];
+function collision(object1,object2,Size1,Size2,x1,x2,y1,y2,){
+    for (let i = object1.length -1; i>=0; i--){
+        let p = object1[i];
+        for (let j = object2.length -1; j>=0; j--){
+        let e = object2[j];
         if(
-        p.pShotX + pShotSize > e.EnemyX &&
-        p.pShotX < e.EnemyX + EnemySize &&
-        p.pShotY + pShotSize > e.EnemyY &&
-        p.pShotY < e.EnemyY + EnemySize
+        p[x1] + p[Size1] > e[x2] &&
+        p[x1] < e[x2] + e[Size2] &&
+        p[y1] + p[Size1] > e[y2] &&
+        p[y1] < e[y2] + e[Size2]
         )
         {
         e.active = false ;
@@ -135,7 +136,7 @@ function collision(){
     }
 }
 class Enemy {
-    constructor(EnemyX,EnemyY,EnemySpeed,EnemyHP,type){
+    constructor(EnemyX,EnemyY,EnemySpeed,EnemyHP,type,EnemySize){
         this.type = type ;
         this.EnemyX = EnemyX ;
         this.EnemyY = EnemyY ;
@@ -145,6 +146,7 @@ class Enemy {
         this.EnemyDy = 0 ;
         this.EnemyAngle = 0 ;
         this.active = true ;
+        this.EnemySize = EnemySize
 
     }
     move (){
@@ -158,20 +160,20 @@ class Enemy {
     }
     draw (){
         ctx.save();
-        ctx.translate(this.EnemyX + EnemySize / 2, this.EnemyY + EnemySize / 2);
+        ctx.translate(this.EnemyX + this.EnemySize / 2, this.EnemyY + this.EnemySize / 2);
         if(playerX - this.EnemyX > 0){
         ctx.scale(1,1);}else{
         ctx.scale(-1,1);
          }
          switch(this.type){
             case 'penguin' :
-                drawImg((Math.floor(frameCounter / 10) % 3) + 13, -EnemySize / 2, -EnemySize / 2, EnemySize); 
+                drawImg((Math.floor(frameCounter / 10) % 3) + 13, -this.EnemySize / 2, -this.EnemySize / 2, this.EnemySize); 
                 break;
             case 'parrot' : 
-                drawImg((Math.floor(frameCounter / 10) % 2) + 11, -EnemySize / 2, -EnemySize / 2, EnemySize); 
+                drawImg((Math.floor(frameCounter / 10) % 2) + 11, -this.EnemySize / 2, -this.EnemySize / 2, this.EnemySize); 
                 break;
             case 'toucan' :
-                drawImg((Math.floor(frameCounter / 10) % 2) + 19, -EnemySize / 2, -EnemySize / 2, EnemySize); 
+                drawImg((Math.floor(frameCounter / 10) % 2) + 19, -this.EnemySize / 2, -this.EnemySize / 2, this.EnemySize); 
                 break;
          }
 
@@ -187,7 +189,7 @@ function EnemyMove(){
     }
 function EnemySpawn(currentTime){
     if(currentTime - lastSpawnTime > EnemySpawnQueue){
-        Enemies.push(new Enemy(0,0,2,20,EnemyType[Math.floor(Math.random()*3)])) ;
+        Enemies.push(new Enemy(0,0,2,20,EnemyType[Math.floor(Math.random()*3)],EnemySize)) ;
         lastSpawnTime = currentTime ;
     }
 

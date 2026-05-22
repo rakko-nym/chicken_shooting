@@ -5,6 +5,10 @@ canvas.height = window.innerHeight;
 const chickenImg = new Image();
 chickenImg.src = 'chicken.png';
 ctx.imageSmoothingEnabled = false;
+function playSE(fileName) {
+    const audio = new Audio(`./音/${fileName.toLowerCase()}.mp3`);    
+    audio.play().catch(e => console.error("再生エラー:", e));
+}
 const player = {
     playerX : canvas.width / 2 , 
     playerY : canvas.height /2 , 
@@ -20,6 +24,7 @@ const player = {
     lastReloadTime : 0 ,
     reloadTime : 2000
 };
+let gameover = false ;
 let playerHit = 0 ;
 let frameCounter = 0;
 let mouseX = null ;
@@ -44,7 +49,21 @@ addEventListener('mousemove',(event)=>{
      mouseY = event.clientY;})
 addEventListener('mouseup',(event)=>{keys['click'] = false})
 addEventListener('mousedown',(event)=>{keys['click'] = true})
+
 function gameLoop (time){
+    if(player.playerHP <= 0){
+    gameover = true ;
+    playSE('chicken1');
+    playSE('chicken2');
+}
+if(gameover === true){
+ctx.fillStyle = 'red' ;
+ctx.font = "100px Arial";
+ctx.textAlign = "center"; 
+ctx.textBaseline = "middle";
+ctx.fillText("GAME OVER" , canvas.width /2 , canvas.height /2);
+}
+if(gameover === false){
 ctx.clearRect(0,0,canvas.width,canvas.height);
 playerMove(time);
 pShotMove();
@@ -61,7 +80,8 @@ ctx.fillStyle = "white";
 ctx.font = "20px Arial";
 ctx.fillText("HP: " + Math.floor(player.playerHP), 20, 30);
 ctx.fillText("reload : " + player.isReload,20,50) ;
-};
+ctx.fillText(gameover , 20 , 70);
+}};
 
 gameLoop(0);
 
@@ -97,8 +117,10 @@ if(keys.s){player.playerY += player.playerSpeed;};
 if(keys.d){player.playerX += player.playerSpeed;};
 if(keys.a){player.playerX -= player.playerSpeed;};
 if(keys.click && !player.isReload){
+    playSE('egg');
     pShots.push(new playerShot(player.playerX+player.playerSize/2, player.playerY+player.playerSize/2));
     keys.click = false ;
+
     drawImg(10 , -player.playerSize / 2, -player.playerSize / 2, player.playerSize);}else{
     drawImg((Math.floor(frameCounter / 10) % 3) + 7, -player.playerSize / 2, -player.playerSize / 2, player.playerSize);
     }
@@ -146,11 +168,12 @@ function pShotMove(){
 }
 
 class Enemy {
-    constructor(EnemyX,EnemyY,EnemyHP,type,EnemySize){
+    constructor(EnemyX,EnemyY,EnemyHP,type,EnemySize,Angle){
         this.type = type ;
         this.EnemyX = EnemyX ;
         this.EnemyY = EnemyY ;
         this.EnemyHP = EnemyHP ;
+        this.Angle = Angle ;
         this.EnemyPower = Math.floor(Math.random()*3) + 3 ;
         this.EnemyDx = 0 ;
         this.EnemyDy = 0 ;
@@ -175,22 +198,23 @@ class Enemy {
             this.EnemySpeed = 0.5 ;
             this.EnemyHP = 30 ;
             this.EnemySize = 300 ;
-            this.bossAngle = 0 ;
+            this.Angle = 0 ;
             this.foo = 1 ;
             this.lastShotTime = 0 ;
             break;
         case 'shot'   :
+             this.Angle = Angle ;
              this.EnemySpeed = 3 ;
-             this.EnemyVx = Math.cos(bossAngle) * this.EnemySpeed ;
-             this.EnemyVy = Math.sin(bossAngle) * this.EnemySpeed ;
+             this.EnemyVx = Math.cos(this.Angle) * this.EnemySpeed ;
+             this.EnemyVy = Math.sin(this.Angle) * this.EnemySpeed ;
             break;
              }
 
     }
     move (currentTime){
         if(this.type !== 'shot'){
-         this.EnemyDx = player.playerX - this.EnemyX ;
-         this.EnemyDy = player.playerY - this.EnemyY ;
+         this.EnemyDx = (player.playerX + player.playerSize /2) - (this.EnemyX + this.EnemySize /2) ;
+         this.EnemyDy = (player.playerY + player.playerSize /2) - (this.EnemyY + this.EnemySize /2) ; 
          this.EnemyAngle = Math.atan2(this.EnemyDy,this.EnemyDx) ;
          this.EnemyVx = Math.cos(this.EnemyAngle) * this.EnemySpeed ;
          this.EnemyVy = Math.sin(this.EnemyAngle) * this.EnemySpeed ;
@@ -202,22 +226,23 @@ class Enemy {
         this.EnemyY > canvas.height + margin || 
         this.EnemyX < -margin || 
         this.EnemyX > canvas.width + margin||
-        this.EnemyHP <= 0){
+        this.EnemyHP <= 0 &&
+        this.type !== 'boss'){
         this.active = false
         }
 if(this.type === 'boss') {
     if(currentTime - this.lastShotTime > 20){
-        this.shot(20);
+        this.shot(20,this.Angle);
         this.lastShotTime = currentTime ;
     }
-    bossAngle += Math.log(this.foo + 1) * 0.5; 
+    this.Angle += Math.log(this.foo + 1) * 0.5; 
     this.foo += 3; 
 }
 }
     draw (){
         ctx.save();
-        ctx.translate(this.EnemyX + this.EnemySize / 2, this.EnemyY + this.EnemySize / 2);
-        if(player.playerX - this.EnemyX > 0){
+        ctx.translate((this.EnemyX + this.EnemySize /2), (this.EnemyY + this.EnemySize /2));
+        if((player.playerX + player.playerSize /2) - (this.EnemyX + this.EnemySize /2) > 0){
         ctx.scale(1,1);}else{
         ctx.scale(-1,1);
          }
@@ -241,8 +266,8 @@ if(this.type === 'boss') {
 
          ctx.restore();
              }
-    shot(size){
-        Enemies.push(new Enemy(this.EnemyX + this.EnemySize /2,this.EnemyY + this.EnemySize /2,20,'shot',size)) ;
+    shot(size,mukimuki){
+        Enemies.push(new Enemy(this.EnemyX + this.EnemySize /2,this.EnemyY + this.EnemySize /2,20,'shot',size,mukimuki)) ;
     }
 }
 function EnemyMove(currentTime){
@@ -256,6 +281,7 @@ function EnemySpawn(currentTime){
     if(currentTime - lastSpawnTime > EnemySpawnQueue){
         spawn(EnemyType[Math.floor(Math.random()*3)]);
         lastSpawnTime = currentTime ;
+        playSE('Chirp');
     }
 }
 function spawn (type){
@@ -311,7 +337,7 @@ if(result !== null && result[1].type === 'shot'){
 player.playerHP -= result[1].EnemyPower ;
 player.lastInvincivleTime = currentTime ;
 player.playerInvincible = true ;
-
+playSE('Crunch');
 
 }
 }
@@ -330,7 +356,7 @@ function pShotEnemyHit() {
                if(e.type === 'boss'){
                     p.active = false;
                     e.EnemyHP -= 1 ;
-                    console.log(e.EnemyHP);
+                    playSE('Clang') ;
                     break;
                }
                 else{

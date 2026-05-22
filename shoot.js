@@ -14,8 +14,8 @@ const player = {
     playerInvincible : false ,
     lastInvincivleTime : 0 ,
     invincivleTime : 1000 , 
-    maxAmmo : 10 , 
-    ammo : 10 ,
+    maxAmmo : 15 , 
+    ammo : 15 ,
     isReload : false ,
     lastReloadTime : 0 ,
     reloadTime : 2000
@@ -60,7 +60,7 @@ window.requestAnimationFrame(gameLoop);
 ctx.fillStyle = "white";
 ctx.font = "20px Arial";
 ctx.fillText("HP: " + Math.floor(player.playerHP), 20, 30);
-ctx.fillText(player.isReload,20,50) ;
+ctx.fillText("reload : " + player.isReload,20,50) ;
 };
 
 gameLoop(0);
@@ -260,15 +260,21 @@ function EnemySpawn(currentTime){
 }
 function spawn (type){
     const random = Math.floor(Math.random()*4) ;
-switch (random){
-    case 0 : Enemies.push(new Enemy(Math.random()*canvas.width,0,20,type,EnemySize)) ;
-        break;
-    case 1 : Enemies.push(new Enemy(Math.random()*canvas.width,canvas.height,20,type,EnemySize)) ;
-        break;
-    case 2 : Enemies.push(new Enemy(0,Math.random()*canvas.height,20,type,EnemySize)) ;
-        break;
-    case 3 : Enemies.push(new Enemy(canvas.width,Math.random()*canvas.height,20,type,EnemySize)) ;
-        break;
+const size = EnemySize; // 余裕を持たせるためのサイズ
+
+    switch (random) {
+        case 0:
+            Enemies.push(new Enemy(Math.random() * canvas.width, -size, 20, type, size));
+            break;
+        case 1:
+            Enemies.push(new Enemy(Math.random() * canvas.width, canvas.height + size, 20, type, size));
+            break;
+        case 2:
+            Enemies.push(new Enemy(-size, Math.random() * canvas.height, 20, type, size));
+            break;
+        case 3:
+            Enemies.push(new Enemy(canvas.width + size, Math.random() * canvas.height, 20, type, size));
+            break;
     }
     }    
 

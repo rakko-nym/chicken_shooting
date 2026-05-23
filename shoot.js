@@ -6,8 +6,19 @@ const chickenImg = new Image();
 chickenImg.src = 'chicken.png';
 ctx.imageSmoothingEnabled = false;
 function playSE(fileName) {
-    const audio = new Audio(`./音/${fileName.toLowerCase()}.mp3`);    
-    audio.play().catch(e => console.error("再生エラー:", e));
+    const path = `./音/${fileName}.mp3`;
+
+    console.log("再生:", path);
+
+    const audio = new Audio(path);
+
+    audio.addEventListener('canplaythrough', () => {
+        audio.play();
+    });
+
+    audio.addEventListener('error', (e) => {
+        console.error("音声ロード失敗", path, e);
+    });
 }
 const player = {
     playerX : canvas.width / 2 , 
@@ -337,7 +348,7 @@ if(result !== null && result[1].type === 'shot'){
 player.playerHP -= result[1].EnemyPower ;
 player.lastInvincivleTime = currentTime ;
 player.playerInvincible = true ;
-playSE('Crunch');
+playSE('crunch');
 }
 }
 
@@ -355,7 +366,7 @@ function pShotEnemyHit() {
                if(e.type === 'boss'){
                     p.active = false;
                     e.EnemyHP -= 1 ;
-                    playSE('Clang') ;
+                    playSE('clang') ;
                 if(e.EnemyHP <= 0){
                     e.active = false;
                     player.score += 3000;

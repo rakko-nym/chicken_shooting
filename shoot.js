@@ -22,7 +22,8 @@ const player = {
     ammo : 15 ,
     isReload : false ,
     lastReloadTime : 0 ,
-    reloadTime : 2000
+    reloadTime : 2000 ,
+    score : 0
 };
 let gameover = false ;
 let playerHit = 0 ;
@@ -78,9 +79,9 @@ window.requestAnimationFrame(gameLoop);
 // デバッグ
 ctx.fillStyle = "white";
 ctx.font = "20px Arial";
-ctx.fillText("HP: " + Math.floor(player.playerHP), 20, 30);
-ctx.fillText("reload : " + player.isReload,20,50) ;
-ctx.fillText(gameover , 20 , 70);
+ctx.fillText("HP : " + Math.floor(player.playerHP), 20, 30);
+ctx.fillText("score : " + player.score , 20 , 50);
+ctx.fillText("reload : " + player.isReload,20,70) ;
 }};
 
 gameLoop(0);
@@ -226,8 +227,7 @@ class Enemy {
         this.EnemyY > canvas.height + margin || 
         this.EnemyX < -margin || 
         this.EnemyX > canvas.width + margin||
-        this.EnemyHP <= 0 &&
-        this.type !== 'boss'){
+        this.EnemyHP <= 0){
         this.active = false
         }
 if(this.type === 'boss') {
@@ -338,7 +338,6 @@ player.playerHP -= result[1].EnemyPower ;
 player.lastInvincivleTime = currentTime ;
 player.playerInvincible = true ;
 playSE('Crunch');
-
 }
 }
 
@@ -357,11 +356,18 @@ function pShotEnemyHit() {
                     p.active = false;
                     e.EnemyHP -= 1 ;
                     playSE('Clang') ;
+                if(e.EnemyHP <= 0){
+                    e.active = false;
+                    player.score += 3000;
+                }
                     break;
                }
                 else{
                 p.active = false;
                 e.active = false;
+                if(e.type !== 'shot'){
+                player.score += 100 ;
+                }
                 break;                
                 } 
             }
